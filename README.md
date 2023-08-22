@@ -7,6 +7,7 @@ A simple laravel application to capture screenshot of added tv channels / stream
 5. php intervention/image (To apply filters to screenshots to make it easier for Tesseract OCR to read texts on the images more accurately)
 
 Other features will be added later 
+
 Spoiler Alert!
 (Opt-ins: Notifications on errors and scans)
 
