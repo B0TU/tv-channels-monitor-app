@@ -17,7 +17,7 @@ class ErrorResource extends Resource
 {
     protected static ?string $model = Error::class;
     protected static ?string $recordTitleAttribute = 'error_description';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
 
     public static function form(Form $form): Form
     {
