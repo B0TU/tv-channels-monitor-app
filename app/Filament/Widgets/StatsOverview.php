@@ -21,8 +21,8 @@ class StatsOverview extends BaseWidget
         $firstRecord = ScanLog::orderBy('created_at')->first(); // Get the first record
         $lastRecord = ScanLog::orderBy('created_at', 'desc')->first(); // Get the last record
 
-        $startTime = strtotime($firstRecord->created_at); // Convert to UNIX timestamp
-        $endTime = strtotime($lastRecord->created_at); // Convert to UNIX timestamp
+        $startTime = strtotime($firstRecord->created_at ?? now()); // Convert to UNIX timestamp
+        $endTime = strtotime($lastRecord->created_at ?? now()); // Convert to UNIX timestamp
 
         $timeDifferenceSeconds = $endTime - $startTime; // Calculate the time difference in seconds
 
