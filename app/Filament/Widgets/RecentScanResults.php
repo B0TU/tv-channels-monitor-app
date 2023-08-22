@@ -29,7 +29,7 @@ class RecentScanResults extends BaseWidget
                     })->description(fn (ScanLog $record): string => $record->message),
                 TextColumn::make('created_at')->since()->sortable(),
             ])->defaultSort('status')
-            ->poll('10s')
+            ->poll('30s')
             ->filters([
                 // ...
             ])

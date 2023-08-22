@@ -13,19 +13,8 @@ use Intervention\Image\ImageManagerStatic as Image;
 
 class CaptureScreenshots extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'cs';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Capture screenshots for all channels';
+    protected $description = 'Capture screenshots of all channels and scan for any predeined error messages';
 
     protected $errors = [];
 
@@ -121,6 +110,8 @@ class CaptureScreenshots extends Command
 
             ScanLog::truncate();
             ScanLog::insert($scanLogs);
+
+            $this->info('Scan Completed');
         }
     }
 }
