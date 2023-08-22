@@ -7,6 +7,7 @@ use App\Models\Channel;
 use App\Models\ScanLog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\File;
+use FFMpeg\Filters\Video\VideoFilters;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +15,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
+
+use Intervention\Image\ImageManagerStatic as Image;
 
 class ScanNowJob implements ShouldQueue
 {
@@ -51,6 +54,30 @@ class ScanNowJob implements ShouldQueue
                     ->export()
                     ->toDisk('screenshots')
                     ->save($screenshotFilename);
+
+                $image = Image::make($img)->invert();
+                $image->brightness(10);
+                $image->contrast(30);
+                $image->greyscale();
+
+                // $width = $image->width();
+                // $height = $image->height();
+
+                // for ($x = 0; $x < $width; $x++) {
+                //     for ($y = 0; $y < $height; $y++) {
+                //         $pixel = $image->pickColor($x, $y, 'array');
+
+                //         // Detect if the pixel color is darker than a threshold (adjust threshold as needed)
+                //         $isDark = array_sum($pixel) < 400; // Adjust threshold value
+
+                //         // If pixel is considered dark, set it to black
+                //         if ($isDark || $pixel[0] < 100) { // Also consider very low red value as text
+                //             $image->pixel([0, 0, 0], $x, $y);
+                //         }
+                //     }
+                // }
+
+                $image->save();
 
                 try {
 
@@ -110,7 +137,6 @@ class ScanNowJob implements ShouldQueue
 
             ScanLog::truncate();
             ScanLog::insert($scanLogs);
-
         }
     }
 }
