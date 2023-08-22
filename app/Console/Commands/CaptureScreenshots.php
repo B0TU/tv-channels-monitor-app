@@ -4,12 +4,12 @@ namespace App\Console\Commands;
 
 use App\Models\Error;
 use App\Models\Channel;
+use App\Models\ScanLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-use app\Services\CaptureScreenshotService;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class CaptureScreenshots extends Command
 {
@@ -34,59 +34,93 @@ class CaptureScreenshots extends Command
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): void
     {
-        $this->info('Processing...');
+        $this->info('Scanning...');
 
         $tesseractPath = "C:/Program Files/Tesseract-OCR/tesseract.exe";
-        $channels = \App\Models\Channel::all();
-        $tempDirectory = storage_path('app/public/');
-        File::cleanDirectory($tempDirectory);
+        $screenshotsDirectory = storage_path('app/public/screenshots/');
+        $channels = Channel::all();
+        File::cleanDirectory($screenshotsDirectory);
 
-        foreach ($channels as $index => $channel) {
-            $screenshotFilename = "{$channel->name}.jpg";
-            $img = $tempDirectory . $screenshotFilename;
+        $scanLogs = [];
 
-            FFMpeg::open($channel->streaming_url)
-                //->getFrameFromSeconds(10)
-                ->export()
-                ->toDisk('public')
-                ->save($screenshotFilename);
+        try {
+            foreach ($channels as $index => $channel) {
+                $screenshotFilename = "{$channel->name}.jpg";
+                $img = $screenshotsDirectory . $screenshotFilename;
 
-            try {
+                FFMpeg::open($channel->streaming_url)
+                    //->getFrameFromSeconds(10)
+                    ->export()
+                    ->toDisk('screenshots')
+                    ->save($screenshotFilename);
 
-                $recognizedText = (new TesseractOCR($img))
-                    ->executable($tesseractPath)
-                    ->run();
-            } catch (\Exception $e) {
-                $this->errors[] = "{$channel->name} - No output";
-                continue;
-            }
+                $image = Image::make($img)->invert();
+                $image->brightness(10);
+                $image->contrast(30);
+                $image->greyscale();
 
-            $predefinedErrors = Error::pluck('error_description')->toArray();
+                $image->save();
 
-            $errorMatch = false;
-            if ($recognizedText) {
-                foreach ($predefinedErrors as $error) {
-                    if (stripos($recognizedText, $error) !== false) {
-                        $errorMatch = true;
-                        $this->errors[] = $channel->name . ' - ' . $recognizedText;
-                        break;
-                    }
+                try {
+
+                    $recognizedText = (new TesseractOCR($img))
+                        ->executable($tesseractPath)
+                        ->run();
+                } catch (\Exception $e) {
+                    $this->errors[] = "{$channel->name} - No output";
+                    $scanLogs[] = [
+                        'channel_name' => $channel->name,
+                        'status' => 'OK',
+                        'message' => 'No errors output was generated, seems all good!',
+                        'created_at' => now(),
+                    ];
+                    continue;
                 }
-            } else {
-                $this->errors[] = $channel->name . ' - No issues, all good!';
-            }
 
-            if (!$errorMatch) {
-                $this->errors[] = $channel->name . ' - No issues, all good!';
+                $predefinedErrors = Error::pluck('error_description')->toArray();
+
+                $errorMatch = false;
+                if ($recognizedText) {
+                    foreach ($predefinedErrors as $error) {
+                        if (stripos($recognizedText, $error) !== false) {
+                            $errorMatch = true;
+                            $this->errors[] = $channel->name . ' - ' . $recognizedText;
+                            $scanLogs[] = [
+                                'channel_name' => $channel->name,
+                                'status' => 'Error',
+                                'message' => $recognizedText,
+                                'created_at' => now(),
+                            ];
+                            break;
+                        }
+                    }
+                } else {
+
+                    $this->errors[] = $channel->name . ' - No issues, all good!';
+                    $scanLogs[] = [
+                        'channel_name' => $channel->name,
+                        'status' => 'OK',
+                        'message' => 'No issues, all good!',
+                        'created_at' => now(),
+                    ];
+                }
+
+                if (!$errorMatch) {
+                    $this->errors[] = $channel->name . ' - No issues, all good!';
+                    $scanLogs[] = [
+                        'channel_name' => $channel->name,
+                        'status' => 'OK',
+                        'message' => 'No issues, all good!',
+                        'created_at' => now(),
+                    ];
+                }
             }
+        } finally {
+
+            ScanLog::truncate();
+            ScanLog::insert($scanLogs);
         }
-
-        //$this->info('Screenshots captured successfully.');
-        $this->info(implode("\n", $this->errors));
     }
 }
