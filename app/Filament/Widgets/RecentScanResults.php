@@ -28,7 +28,7 @@ class RecentScanResults extends BaseWidget
                         'Error' => 'danger',
                     })->description(fn (ScanLog $record): string => $record->message),
                 TextColumn::make('created_at')->since()->sortable(),
-            ])->defaultSort('created_at', 'desc')
+            ])->defaultSort('status')
             ->poll('10s')
             ->filters([
                 // ...
