@@ -39,8 +39,8 @@ class CaptureScreenshots extends Command
                 $screenshotFilename = "{$channel->name}.jpg";
                 $img = $screenshotsDirectory . $screenshotFilename;
 
-                FFMpeg::open($channel->streaming_url)
-                    //->getFrameFromSeconds(10)
+                FFMpeg::openUrl($channel->streaming_url)
+                    ->getFrameFromSeconds(3)
                     ->export()
                     ->toDisk('screenshots')
                     ->save($screenshotFilename);
