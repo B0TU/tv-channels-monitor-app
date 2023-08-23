@@ -16,6 +16,7 @@ Installation:
 Make sure you have installed FFMpeg and Tesseract OCR into you server / system.
 
 1. git clone https://github.com/B0TU/tv-channels-monitor-app
-2. Composer install
+2. Composer update
 3. run php artisan migrate
 4. run php artisan:filament-user
+5. run php artisan queue:work
