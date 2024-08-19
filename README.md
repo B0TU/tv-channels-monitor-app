@@ -13,7 +13,7 @@ Spoiler Alert!
 
 Installation:
 
-Make sure you have installed FFMpeg and Tesseract OCR into you server / system.
+Make sure you have installed FFMpeg and Tesseract OCR on to you server / system.
 
 1. git clone https://github.com/B0TU/tv-channels-monitor-app
 2. Composer update
